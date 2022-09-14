@@ -48,21 +48,48 @@ public class testUROP {
 	public static ArrayList<BigInteger> plaintexts;
 	//Newly added 
 
-	public static String contractAddress ="0x82757D44DCA335AcC51b12725773CA524039702b";
+	public static String contractAddress ="0x9dE8e9993DF2a01464CD2179E7f5324DfcDA50b3";
 	public static Web3j web3j;
 
 	public static void main(String[] args) throws Exception {
-		
-		
-		Setup();
-		testDKeyGen();
-		testEncrypt();
-		SetupWithContract();
+		web3j = Web3j.build(new HttpService("https://rinkeby.infura.io/v3/e732435ba40d4d2c948ab4a9d3eace97"));
+		Web3ClientVersion web3ClientVersion = (Web3ClientVersion)web3j.web3ClientVersion().send();
+		System.out.println(web3ClientVersion.getWeb3ClientVersion());
+		Credentials credentials = Credentials.create("4bbe1fe43741f6143dcdd4af42ed6c9ab3e53a8bbb7ecfbb6aeb5c7aa8d7863f");
+		System.out.println("Credentials loaded, procceding to load Aggregator contract");
+		System.out.println(credentials.getAddress());
+		new RawTransactionManager(web3j, credentials, 4L);
+		ExperimentAgreegator contract = ExperimentAgreegator.load(contractAddress, web3j, credentials,  DefaultGasProvider.GAS_PRICE, DefaultGasProvider.GAS_LIMIT);
+		BigInteger a=nextRandomBigInteger(100);
+		ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
+		g=spec.getG();
+		contract.uploada(a,BigInteger.ONE).send();
+		System.out.println("upload a");
+		System.out.println(contract.a().send());
+		ECPoint ga=g.multiply(a).normalize();
+		List<BigInteger> x= Arrays.asList(new BigInteger[]{ga.getAffineXCoord().toBigInteger(),ga.getAffineYCoord().toBigInteger()});
+
+
+		String message="The x coordinate of the g*a is \n"+g.multiply(a).normalize().getAffineXCoord()+"\n";
+		message=message+"The y coordinate of the g*a is \n"+g.multiply(a).normalize().getAffineYCoord()+"\n";
+		message=message+"The y coordinate of the g*a is \n"+g.multiply(a).normalize().getAffineYCoord()+"\n";
+		message=message+"=====Please wait for the verification=====\n";
+		System.out.println("message");
+		System.out.println(contract.verifyGA(x,BigInteger.ONE).send());
+
+
+		//Initiate the vector w
+
+
+//		Setup();
+//		testDKeyGen();
+//		testEncrypt();
+//		SetupWithContract();
 //		testNIZP();
-		testDecryption();
-		
+//		testDecryption();
+
 	}
-	
+
 	private static void Setup() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
 		System.out.println("---------------------------------------");
 		System.out.println("Setup");
@@ -91,7 +118,7 @@ public class testUROP {
 		ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
 		g=spec.getG();
 
-		
+
 	}
 	private static void SetupWithContract() throws Exception {
 		web3j = Web3j.build(new HttpService("https://rinkeby.infura.io/v3/e732435ba40d4d2c948ab4a9d3eace97"));
@@ -145,7 +172,7 @@ public class testUROP {
 		System.out.println("---------------------------------------");
 		BigInteger a=nextRandomBigInteger(securityParameter);
 		System.out.println("Hi broker, your random a is "+a);
-		
+
 		EQprotocol protocol =new EQprotocol(g,fsk,a,utEcPoint,g.getCurve());
 		if(protocol.NIZKtest()) {
 			System.out.println("Pass the four tests");
@@ -154,14 +181,14 @@ public class testUROP {
 			System.out.println("Fail to verify");
 		}
 		// TODO Auto-generated method stub
-		
+
 	}
 	private static void testDKeyGen() {
 		System.out.println("---------------------------------------");
 		System.out.println("DKeyGen");
 		System.out.println("---------------------------------------");
 		System.out.println("DKeyGen(msk, w):");
-		
+
 		System.out.println("msk=");
 		msk.forEach(s->{
 			System.out.println("s1: "+s.getValue0());
@@ -183,17 +210,17 @@ public class testUROP {
 		System.out.println("The x coordinate :"+fpkTriplet.getValue2().getAffineXCoord());
 		System.out.println("The y coordinate :"+fpkTriplet.getValue2().getAffineYCoord());
 		// TODO Auto-generated method stub
-		
+
 	}
-	
+
 	private static void testEncrypt() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
-	
+
 		System.out.println("---------------------------------------");
 		System.out.println("Encrypt");
 		System.out.println("---------------------------------------");
 		ECCurve curve =g.getCurve();
 		System.out.println("The generator is : "+g.toString());
-		
+
 		BigInteger label=nextRandomBigInteger(securityParameter);
 		System.out.println("The label is: "+label);
 		ciphertexts=new ArrayList<>();
@@ -208,9 +235,9 @@ public class testUROP {
 			ciphertexts.add(point);
 			utEcPoint=tEncryption.getut();
 		}
-		
-		
-		
+
+
+
 	}
 	private static void testDecryption() {
 		System.out.println("---------------------------------------");
@@ -220,19 +247,19 @@ public class testUROP {
 		for(int i=1;i<w.size();i++) {
 			ECPoint temPoint=ciphertexts.get(i).multiply(w.get(i)).normalize();
 			cipherPoint=cipherPoint.add(temPoint).normalize();
-			
+
 		}
 		System.out.println("The x coordinate of cipherPoint C(t) "+" is: "+cipherPoint.getAffineXCoord().toBigInteger());
 		System.out.println("The y coordinate of cipherPoint C(t) "+" is: "+cipherPoint.getAffineYCoord().toBigInteger());
 		System.out.println("");
 		ECPoint result= cipherPoint.subtract(utEcPoint.getValue0().multiply(fsk.getValue0()).normalize()).normalize();
 		result= result.subtract(utEcPoint.getValue1().multiply(fsk.getValue1()).normalize()).normalize();
-		
+
 		System.out.println("The x coordinate of the result is "+result.getAffineXCoord());
 		System.out.println("The y coordinate of the result is "+result.getAffineYCoord());
-		
-		
-		
+
+
+
 		//Calculate X(t)
 		BigInteger x=BigInteger.valueOf(0);
 		for(int i=0;i<w.size();i++) {
@@ -240,46 +267,46 @@ public class testUROP {
 		}
 		System.out.println("X(t) is "+x.toString());
 		ECPoint gx=g.multiply(x).normalize();
-		
-		
-		
+
+
+
 		System.out.println("The x coordinate of the g*X(t) is "+gx.getAffineXCoord());
 		System.out.println("The y coordinate of the g*X(t) is "+gx.getAffineYCoord());
 		System.out.println(gx.equals(result));
-		
-		
+
+
 		ECPoint testEcPoint=utEcPoint.getValue0().multiply(fsk.getValue0()).normalize();
 		testEcPoint=testEcPoint.add(utEcPoint.getValue1().multiply(fsk.getValue1())).normalize();
 		testEcPoint=testEcPoint.add(gx).normalize();
 		System.out.println("The x coordinate of the testEcPoint is "+testEcPoint.getAffineXCoord());
 		System.out.println("The y coordinate of the testEcPoint is "+testEcPoint.getAffineYCoord());
 		System.out.println(testEcPoint.equals(cipherPoint));
-	
+
 	}
 	public static BigInteger nextRandomBigInteger(Integer securityParameter) {
 		BigInteger n=TWO.pow(securityParameter);
-	    Random rand = new Random();
-	    BigInteger result = new BigInteger(n.bitLength(), rand);
-	    while( result.compareTo(n) >= 0 ) {
-	        result = new BigInteger(n.bitLength(), rand);
-	    }
-	    return result;
+		Random rand = new Random();
+		BigInteger result = new BigInteger(n.bitLength(), rand);
+		while( result.compareTo(n) >= 0 ) {
+			result = new BigInteger(n.bitLength(), rand);
+		}
+		return result;
 	}
 
-    private static String getPrivateKeyAsHex(PrivateKey privateKey) {
+	private static String getPrivateKeyAsHex(PrivateKey privateKey) {
 
-        ECPrivateKey ecPrivateKey = (ECPrivateKey) privateKey;
-        byte[] privateKeyBytes = new byte[24];
-        writeToStream(privateKeyBytes, 0, ecPrivateKey.getS(), 24);
+		ECPrivateKey ecPrivateKey = (ECPrivateKey) privateKey;
+		byte[] privateKeyBytes = new byte[24];
+		writeToStream(privateKeyBytes, 0, ecPrivateKey.getS(), 24);
 
-        return Hex.toHexString(privateKeyBytes);
-    }
-    private static void writeToStream(byte[] stream, int start, BigInteger value, int size) {
-        byte[] data = value.toByteArray();
-        int length = Math.min(size, data.length);
-        int writeStart = start + size - length;
-        int readStart = data.length - length;
-        System.arraycopy(data, readStart, stream, writeStart, length);
-    }
+		return Hex.toHexString(privateKeyBytes);
+	}
+	private static void writeToStream(byte[] stream, int start, BigInteger value, int size) {
+		byte[] data = value.toByteArray();
+		int length = Math.min(size, data.length);
+		int writeStart = start + size - length;
+		int readStart = data.length - length;
+		System.arraycopy(data, readStart, stream, writeStart, length);
+	}
 
 }

@@ -1,6 +1,6 @@
 package test;
 
-
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
@@ -115,7 +115,11 @@ public class ExperimentAgreegator extends Contract {
         }));
         return this.executeRemoteCallSingleValueReturn(function, BigInteger.class);
     }
-
+    public RemoteCall<BigInteger> a() {
+        Function function = new Function("a", Arrays.asList(), Arrays.asList(new TypeReference<Uint256>() {
+        }));
+        return this.executeRemoteCallSingleValueReturn(function, BigInteger.class);
+    }
     public RemoteCall<TransactionReceipt> collectionDeadlinePassed() {
         Function function = new Function("collectionDeadlinePassed", Arrays.asList(), Collections.emptyList());
         return this.executeRemoteCallTransaction(function);
@@ -256,10 +260,33 @@ public class ExperimentAgreegator extends Contract {
         }));
         return this.executeRemoteCallSingleValueReturn(function, BigInteger.class);
     }
-
+    public RemoteCall<TransactionReceipt> uploada(BigInteger value, BigInteger weiValue) {
+        Function function = new Function("uploada", Arrays.asList(new Uint256(value)), Collections.emptyList());
+        return this.executeRemoteCallTransaction(function, weiValue);
+    }
     public RemoteCall<TransactionReceipt> appendCiphers(List<BigInteger> appendMe, BigInteger weiValue) {
         Function function = new Function("simpleappendCiphers", Arrays.asList( new StaticArray2(Utils.typeMap(appendMe, Uint256.class))), Collections.emptyList());
         return this.executeRemoteCallTransaction(function, weiValue);
+    }
+    public RemoteCall<BigInteger> verifyGA(List<BigInteger> appendMe, BigInteger weiValue)  {
+        Function function = new Function("verifyGA", Arrays.asList( new StaticArray2(Utils.typeMap(appendMe, Uint256.class))), Arrays.asList(new TypeReference<Uint8>() {
+        }));
+        return this.executeRemoteCallSingleValueReturn(function, BigInteger.class);
+    }
+    public RemoteCall<TransactionReceipt> addGA(List<BigInteger> GA, BigInteger weiValue) {
+        Function function = new Function("addGA", Arrays.asList( new StaticArray2(Utils.typeMap(GA, Uint256.class))), Collections.emptyList());
+
+        return this.executeRemoteCallTransaction(function, weiValue);
+    }
+    public RemoteCall<List> getGA() {
+        final Function function = new Function("getGA", Arrays.asList(), Arrays.asList(new TypeReference<StaticArray3<Uint256>>() {
+        }));
+        return new RemoteCall(new Callable<List>() {
+            public List call() throws Exception {
+                List<Type> result = (List)ExperimentAgreegator.this.executeCallSingleValueReturn(function, List.class);
+                return ExperimentAgreegator.convertToNative(result);
+            }
+        });
     }
 
     public static RemoteCall<ExperimentAgreegator> deploy(Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
